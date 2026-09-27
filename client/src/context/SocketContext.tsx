@@ -75,11 +75,22 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     sk.on('notification.unreadCount', handleUnreadCount);
     sk.on('user.presence', handlePresence);
 
+    if (sk.connected) {
+      sk.emit('get_presence');
+    }
+
+    const onConnect = () => {
+      sk.emit('get_presence');
+    };
+
+    sk.on('connect', onConnect);
+
     return () => {
       sk.off('activity.created', handleActivityCreated);
       sk.off('notification.created', handleNotificationCreated);
       sk.off('notification.unreadCount', handleUnreadCount);
       sk.off('user.presence', handlePresence);
+      sk.off('connect', onConnect);
     };
   }, [user, queryClient]);
 

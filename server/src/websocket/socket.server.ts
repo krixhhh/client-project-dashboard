@@ -67,6 +67,10 @@ export function initSocketServer(httpServer: HttpServer): Server {
     // Broadcast presence update
     broadcastPresence();
 
+    socket.on('get_presence', () => {
+      broadcastPresence();
+    });
+
     // Client requests joining explicit project room (with authorization check!)
     socket.on('join_project_room', async (projectId: string) => {
       try {
