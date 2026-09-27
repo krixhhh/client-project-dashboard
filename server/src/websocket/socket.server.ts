@@ -130,7 +130,7 @@ function broadcastPresence() {
   // Unique users count
   const uniqueUserIds = new Set(onlineUsersList.map((u) => u.userId));
 
-  io.to('admin').emit('user.presence', {
+  io.emit('user.presence', {
     count: uniqueUserIds.size,
     users: onlineUsersList,
   });

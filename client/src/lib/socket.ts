@@ -4,12 +4,16 @@ import { getAccessToken } from './api';
 let socket: Socket | null = null;
 
 export function connectSocket(): Socket {
-  if (socket && socket.connected) {
-    return socket;
-  }
-
   const token = getAccessToken();
   const socketUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin;
+
+  if (socket) {
+    socket.auth = { token };
+    if (!socket.connected) {
+      socket.connect();
+    }
+    return socket;
+  }
 
   socket = io(socketUrl, {
     auth: {
