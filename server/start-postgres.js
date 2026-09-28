@@ -38,9 +38,17 @@ async function startPgServer() {
   });
 
   try {
-    await pg.initialise();
+    try {
+      await pg.initialise();
+    } catch (initErr) {
+      // Data directory already initialized
+    }
     await pg.start();
-    await pg.createDatabase('client_dashboard');
+    try {
+      await pg.createDatabase('client_dashboard');
+    } catch (dbErr) {
+      // Database already exists
+    }
     console.log('[PostgreSQL] Embedded PostgreSQL running on port 5432!');
   } catch (err) {
     console.warn('[PostgreSQL] Notice:', err.message);
