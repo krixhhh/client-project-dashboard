@@ -1,9 +1,25 @@
 import { prisma } from './config/database';
 import bcrypt from 'bcryptjs';
 import { Role, TaskStatus, TaskPriority } from '@prisma/client';
+import { execSync } from 'child_process';
+import path from 'path';
+import fs from 'fs';
 
 export async function ensureDatabaseSeeded() {
   try {
+    try {
+      console.log('[Database] Checking / synchronizing Prisma schema with database...');
+      const prismaCliPath = path.join(process.cwd(), 'node_modules', 'prisma', 'build', 'index.js');
+      if (fs.existsSync(prismaCliPath)) {
+        execSync(`"${process.execPath}" "${prismaCliPath}" db push --skip-generate`, { stdio: 'inherit' });
+      } else {
+        execSync('npx prisma db push --skip-generate', { stdio: 'inherit' });
+      }
+      console.log('[Database] Prisma schema sync complete.');
+    } catch (schemaErr: any) {
+      console.warn('[Database] Schema sync notice:', schemaErr.message);
+    }
+
     const userCount = await prisma.user.count();
     if (userCount > 0) {
       console.log(`[Database] Database already seeded (${userCount} users found).`);
