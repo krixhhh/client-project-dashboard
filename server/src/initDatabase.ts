@@ -20,15 +20,59 @@ export async function ensureDatabaseSeeded() {
       console.warn('[Database] Schema sync notice:', schemaErr.message);
     }
 
+    let adminUser = await prisma.user.findFirst({
+      where: { email: { equals: 'admin@example.com', mode: 'insensitive' } },
+    });
+
+    const freshHash = await bcrypt.hash('password123', 10);
+    const demoEmails = [
+      'admin@example.com',
+      'pm1@example.com',
+      'pm2@example.com',
+      'developer1@example.com',
+      'developer2@example.com',
+      'developer3@example.com',
+      'developer4@example.com',
+    ];
+
+    if (!adminUser) {
+      console.log('[Database] Admin user missing. Creating admin user...');
+      adminUser = await prisma.user.create({
+        data: {
+          name: 'Sarah Connor (Admin)',
+          email: 'admin@example.com',
+          passwordHash: freshHash,
+          role: Role.ADMIN,
+          lastSeenAt: new Date(),
+        },
+      });
+    }
+
     const userCount = await prisma.user.count();
-    if (userCount > 0) {
-      console.log(`[Database] Database already seeded (${userCount} users found).`);
+    const adminPasswordValid = await bcrypt.compare('password123', adminUser.passwordHash);
+
+    if (!adminPasswordValid) {
+      console.log('[Database] Resetting admin@example.com & demo user password hashes to password123...');
+      await prisma.user.updateMany({
+        where: { email: { in: demoEmails } },
+        data: { passwordHash: freshHash },
+      });
+      await prisma.user.update({
+        where: { id: adminUser.id },
+        data: { passwordHash: freshHash },
+      });
+      console.log('[Database] Admin & demo user password hashes successfully updated!');
+    } else {
+      console.log(`[Database] Database seeded and admin credentials verified (${userCount} users found).`);
+    }
+
+    if (userCount > 1) {
       return;
     }
 
-    console.log('[Database] Database empty. Seeding demo dataset...');
+    console.log('[Database] Database missing demo dataset. Seeding remaining demo dataset...');
 
-    const passwordHash = await bcrypt.hash('password123', 10);
+    const passwordHash = freshHash;
 
     // 1. Users
     const admin = await prisma.user.create({

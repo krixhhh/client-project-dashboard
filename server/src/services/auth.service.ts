@@ -10,7 +10,8 @@ const REFRESH_COOKIE_NAME = 'refreshToken';
 
 export class AuthService {
   static async login(email: string, password: string, res: Response) {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = email ? email.trim().toLowerCase() : '';
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user) {
       throw new UnauthorizedError('Invalid email or password');
     }
