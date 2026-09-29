@@ -6,25 +6,33 @@ A real-time internal SaaS dashboard designed for software development agencies. 
 
 ## Table of Contents
 
-1. [Project Overview](#project-overview)
-2. [Key Features](#key-features)
-3. [Technology Stack](#technology-stack)
-4. [System Architecture](#system-architecture)
-5. [Repository Structure](#repository-structure)
-6. [Database Schema & Indexes](#database-schema--indexes)
-7. [Authentication & Security](#authentication--security)
-8. [Role-Based Access Control (RBAC)](#role-based-access-control-rbac)
-9. [Real-Time Activity Feed & Socket.IO Architecture](#real-time-activity-feed--socketio-architecture)
-10. [Missed Activity Catch-Up Strategy](#missed-activity-catch-up-strategy)
-11. [Notifications Architecture](#notifications-architecture)
-12. [Background Job Architecture (BullMQ + Redis)](#background-job-architecture-bullmq--redis)
-13. [API Reference](#api-reference)
-14. [Local Setup & Development](#local-setup--development)
-15. [Docker Setup](#docker-setup)
-16. [Test Credentials](#test-credentials)
-17. [Architectural Decisions & Rationale](#architectural-decisions--rationale)
-18. [Assessment Explanation](#assessment-explanation)
-19. [Known Limitations](#known-limitations)
+1. [Live Demo](#live-demo)
+2. [Project Overview](#project-overview)
+3. [Key Features](#key-features)
+4. [Technology Stack](#technology-stack)
+5. [System Architecture](#system-architecture)
+6. [Repository Structure](#repository-structure)
+7. [Database Schema & Indexes](#database-schema--indexes)
+8. [Authentication & Security](#authentication--security)
+9. [Role-Based Access Control (RBAC)](#role-based-access-control-rbac)
+10. [Real-Time Activity Feed & Socket.IO Architecture](#real-time-activity-feed--socketio-architecture)
+11. [Missed Activity Catch-Up Strategy](#missed-activity-catch-up-strategy)
+12. [Notifications Architecture](#notifications-architecture)
+13. [Background Job Architecture (BullMQ + Redis)](#background-job-architecture-bullmq--redis)
+14. [API Reference](#api-reference)
+15. [Local Setup & Development](#local-setup--development)
+16. [Docker Setup](#docker-setup)
+17. [Test Credentials](#test-credentials)
+18. [Architectural Decisions & Rationale](#architectural-decisions--rationale)
+19. [Explanation](#explanation)
+20. [Known Limitations](#known-limitations)
+
+---
+
+## Live Demo
+
+- **Live Application**: https://client-project-dashboard.vercel.app
+- **GitHub Repository**: https://github.com/krixhhh/client-project-dashboard
 
 ---
 
@@ -328,13 +336,13 @@ All seeded accounts use the password: `password123`
 
 ---
 
-## Assessment Explanation
+## Explanation
 
-The hardest problem solved in this implementation was engineering a bulletproof real-time role-filtered activity feed without exposing unauthorized project or task events to connected clients. In a multi-tenant agency application, broadcasting all activity logs over a single WebSocket channel and filtering them on the frontend introduces severe security vulnerabilities. 
+This client project dashboard provides real-time tracking for software agencies across three distinct user roles: Admins with full system visibility, Project Managers who control assigned projects, and Developers restricted to their assigned tasks. Data persistence is managed via PostgreSQL and Prisma ORM with role-based filtering enforced at the query layer.
 
-To solve this, I designed a server-side Socket.IO room architecture coupled with explicit authorization checks during WebSocket room join requests. When a user authenticates, the server assigns them to role-specific rooms (`admin`, `project:<id>`, or `user:<id>`). When a task status change occurs, the server evaluates permission boundaries and emits the payload only to the authorized rooms. To ensure users coming back online do not lose context, I implemented a database catch-up mechanism that queries the 20 most recent relevant events from PostgreSQL upon page load, while the frontend uses Activity IDs to deduplicate incoming live WebSocket events against database records.
+Authentication uses short-lived JWT access tokens stored in client memory alongside long-lived refresh tokens stored in HttpOnly cookies with token rotation. Real-time activity feeds and unread notification badges are delivered using Socket.IO, where authenticated client sockets join server-controlled rooms (`admin`, `project:<id>`, `user:<id>`) based on verified user permissions. Offline clients reconnecting fetch the 20 most recent relevant events from PostgreSQL, deduplicating records by Activity ID.
 
-In a future version, one key improvement would be implementing full optimistic UI updates with rollback capabilities in TanStack Query for instant drag-and-drop Kanban board transitions.
+Background task scheduling is handled by a BullMQ worker backed by Redis, running a repeatable job every 60 seconds that flags overdue tasks and dispatches real-time alerts. Frontend task views sync search, status, and due-date filters directly with URL query parameters for bookmarkable states. The production application is deployed with the React frontend hosted on Vercel and the Node.js Express backend on Render, connecting to managed PostgreSQL and Redis instances.
 
 ---
 
