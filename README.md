@@ -31,7 +31,7 @@ A real-time internal SaaS dashboard designed for software development agencies. 
 
 ## Live Demo
 
-- **Live Application**: https://client-project-dashboard.vercel.app
+- **Live Application**: https://client-project-dashboard-kz14r9mh5-krixhhh12-3823s-projects.vercel.app/dashboard
 - **GitHub Repository**: https://github.com/krixhhh/client-project-dashboard
 
 ---
